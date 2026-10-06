@@ -1,0 +1,30 @@
+{
+ "bits": 2,
+ "trained_gates": 131,
+ "seeds_tried": 18,
+ "exact_solutions": 10,
+ "smallest_circuit_gates": 11,
+ "smallest_circuit_depth": 4,
+ "gate_counts_of_solutions": [
+  11,
+  13,
+  16,
+  21,
+  23,
+  27,
+  29,
+  31,
+  32,
+  32
+ ],
+ "ops": {
+  "AND": 1,
+  "A_AND_NOT_B": 1,
+  "XOR": 2,
+  "OR": 1,
+  "XNOR": 1,
+  "A_OR_NOT_B": 1,
+  "NOT_A_OR_B": 1,
+  "NAND": 3
+ }
+}

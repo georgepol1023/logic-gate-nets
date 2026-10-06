@@ -1,0 +1,41 @@
+{
+ "samples": 10000,
+ "numpy": {
+  "ns_per_sample": 1215.0869000038256,
+  "accuracy": 0.945
+ },
+ "pytorch": {
+  "ns_per_sample": 1057868.3498000032
+ },
+ "c": {
+  "ns_per_sample_circuit": 232.706,
+  "ns_per_sample_with_votes": 3549.711,
+  "compile_seconds": 57.68476867675781,
+  "matches_numpy": true
+ },
+ "mlp": {
+  "ns_per_sample": 7252.157099998159,
+  "accuracy": 0.9766,
+  "params": 269322,
+  "macs": 268800
+ },
+ "circuit": {
+  "inputs": 784,
+  "gates": 13787,
+  "depth": 4,
+  "outputs": 6000,
+  "ops": {
+   "AND": 957,
+   "A_AND_NOT_B": 1143,
+   "NOT_A_AND_B": 1426,
+   "XOR": 1963,
+   "OR": 1634,
+   "NOR": 1710,
+   "XNOR": 1926,
+   "A_OR_NOT_B": 1219,
+   "NOT_A": 50,
+   "NOT_A_OR_B": 1013,
+   "NAND": 746
+  }
+ }
+}

@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+data/
+runs/*/model.pt
+runs/*/c/
+runs/*/cpp/
+.venv/
+.DS_Store

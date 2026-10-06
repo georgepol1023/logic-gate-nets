@@ -1,0 +1,17 @@
+{
+ "args": {
+  "dataset": "mnist",
+  "hidden": [
+   256,
+   256
+  ],
+  "epochs": 10,
+  "batch_size": 128,
+  "lr": 0.001,
+  "seed": 0
+ },
+ "test_acc": 0.9765999913215637,
+ "params": 269322,
+ "multiply_accumulates": 268800,
+ "train_seconds": 25.866592168807983
+}

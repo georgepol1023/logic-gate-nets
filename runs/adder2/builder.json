@@ -1,0 +1,308 @@
+{
+ "inputs": [
+  {
+   "id": 1,
+   "x": 50,
+   "y": 80,
+   "value": 0,
+   "label": "A1"
+  },
+  {
+   "id": 2,
+   "x": 50,
+   "y": 160,
+   "value": 0,
+   "label": "A0"
+  },
+  {
+   "id": 3,
+   "x": 50,
+   "y": 240,
+   "value": 0,
+   "label": "B1"
+  },
+  {
+   "id": 4,
+   "x": 50,
+   "y": 320,
+   "value": 0,
+   "label": "B0"
+  }
+ ],
+ "gates": [
+  {
+   "id": 5,
+   "type": "NAND",
+   "x": 500,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 1,
+     "type": "input"
+    },
+    {
+     "sourceId": 4,
+     "type": "input"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 6,
+   "type": "XOR",
+   "x": 350,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 1,
+     "type": "input"
+    },
+    {
+     "sourceId": 3,
+     "type": "input"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 7,
+   "type": "NOT",
+   "x": 500,
+   "y": 150,
+   "inputConnections": [
+    {
+     "sourceId": 6,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 8,
+   "type": "OR",
+   "x": 500,
+   "y": 240,
+   "inputConnections": [
+    {
+     "sourceId": 1,
+     "type": "input"
+    },
+    {
+     "sourceId": 2,
+     "type": "input"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 9,
+   "type": "NAND",
+   "x": 500,
+   "y": 330,
+   "inputConnections": [
+    {
+     "sourceId": 2,
+     "type": "input"
+    },
+    {
+     "sourceId": 4,
+     "type": "input"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 10,
+   "type": "XOR",
+   "x": 500,
+   "y": 420,
+   "inputConnections": [
+    {
+     "sourceId": 2,
+     "type": "input"
+    },
+    {
+     "sourceId": 4,
+     "type": "input"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 11,
+   "type": "AND",
+   "x": 800,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 1,
+     "type": "input"
+    },
+    {
+     "sourceId": 7,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 12,
+   "type": "XOR",
+   "x": 800,
+   "y": 150,
+   "inputConnections": [
+    {
+     "sourceId": 7,
+     "type": "gate"
+    },
+    {
+     "sourceId": 9,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 13,
+   "type": "NOT",
+   "x": 650,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 5,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 14,
+   "type": "OR",
+   "x": 800,
+   "y": 240,
+   "inputConnections": [
+    {
+     "sourceId": 3,
+     "type": "input"
+    },
+    {
+     "sourceId": 13,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 15,
+   "type": "NOT",
+   "x": 950,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 10,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 16,
+   "type": "OR",
+   "x": 1100,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 15,
+     "type": "gate"
+    },
+    {
+     "sourceId": 11,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 17,
+   "type": "NAND",
+   "x": 1100,
+   "y": 150,
+   "inputConnections": [
+    {
+     "sourceId": 8,
+     "type": "gate"
+    },
+    {
+     "sourceId": 14,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 18,
+   "type": "NOT",
+   "x": 1250,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 17,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  },
+  {
+   "id": 19,
+   "type": "AND",
+   "x": 1400,
+   "y": 60,
+   "inputConnections": [
+    {
+     "sourceId": 16,
+     "type": "gate"
+    },
+    {
+     "sourceId": 18,
+     "type": "gate"
+    }
+   ],
+   "output": 0
+  }
+ ],
+ "outputs": [
+  {
+   "id": 20,
+   "x": 1550,
+   "y": 80,
+   "value": 0,
+   "label": "S2",
+   "connection": {
+    "sourceId": 19,
+    "type": "gate"
+   }
+  },
+  {
+   "id": 21,
+   "x": 1550,
+   "y": 160,
+   "value": 0,
+   "label": "S1",
+   "connection": {
+    "sourceId": 12,
+    "type": "gate"
+   }
+  },
+  {
+   "id": 22,
+   "x": 1550,
+   "y": 240,
+   "value": 0,
+   "label": "S0",
+   "connection": {
+    "sourceId": 10,
+    "type": "gate"
+   }
+  }
+ ]
+}

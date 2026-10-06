@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logic gate digit reader</title>
+<meta name="description" content="Draw a digit. A circuit made only of logic gates, learned by gradient descent, reads it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #edf0f3;
+    --surface: #ffffff;
+    --ink: #18212b;
+    --muted: #66727f;
+    --wire: #c9d0d8;
+    --signal: #e2a012;
+    --signal-ink: #3b2a00;
+    --radius-pad: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141a21;
+      --surface: #1c232c;
+      --ink: #e6eaee;
+      --muted: #8f9ba8;
+      --wire: #2f3944;
+      --signal: #f0b429;
+      --signal-ink: #1d1500;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  main { max-width: 1040px; margin: 0 auto; padding: 48px 24px 72px; }
+
+  h1 {
+    font-stretch: 72%;
+    font-weight: 750;
+    font-size: clamp(2.1rem, 5.4vw, 3.6rem);
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    max-width: 16ch;
+  }
+  .lede { color: var(--muted); max-width: 58ch; margin: 0 0 40px; }
+
+  .bench {
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 760px) { .bench { grid-template-columns: 1fr; gap: 28px; } }
+
+  .pad-wrap { position: relative; }
+  #pad {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--surface);
+    border-radius: var(--radius-pad);
+    box-shadow: inset 0 0 0 1px var(--wire);
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .pad-hint {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 15px;
+  }
+  .pad-tools { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  button {
+    font: inherit; font-size: 15px; font-weight: 600;
+    color: var(--ink); background: transparent;
+    border: 1px solid var(--wire); border-radius: 8px;
+    padding: 7px 16px; cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible, #pad:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; }
+  .timing { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+
+  .readout { display: grid; grid-template-columns: auto 1fr; gap: 8px 28px; align-items: end; margin-bottom: 26px; }
+  .guess {
+    font-stretch: 62%;
+    font-weight: 800;
+    font-size: 132px;
+    line-height: 0.8;
+    min-width: 0.6em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .guess.empty { color: var(--wire); }
+  .seen figure { margin: 0; }
+  #seen { width: 112px; height: 112px; image-rendering: pixelated; border-radius: 4px; display: block; }
+  .seen figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; max-width: 18ch; line-height: 1.35; }
+
+  .votes { display: grid; gap: 7px; }
+  .vote { display: grid; grid-template-columns: 1.2em 1fr 3.4em; gap: 12px; align-items: center; font-variant-numeric: tabular-nums; }
+  .vote .d { font-weight: 700; text-align: right; }
+  .vote .n { text-align: right; color: var(--muted); font-size: 14px; }
+  .track { height: 14px; position: relative; }
+  .bar {
+    position: absolute; inset: 0 auto 0 0; width: 0;
+    /* thin ticks: every tick is a block of output gates voting 1 */
+    background: repeating-linear-gradient(90deg, var(--wire) 0 2px, transparent 2px 4px);
+    transition: width 120ms ease-out;
+  }
+  .vote.win .bar { background: repeating-linear-gradient(90deg, var(--signal) 0 2px, transparent 2px 4px); }
+  .vote.win .d, .vote.win .n { color: var(--ink); }
+  .votes-caption { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+
+  .notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--wire); }
+  @media (max-width: 760px) { .notes { grid-template-columns: 1fr; gap: 20px; } }
+  .notes h2 { font-size: 17px; font-weight: 700; margin: 0 0 6px; }
+  .notes p { margin: 0; color: var(--muted); font-size: 15.5px; max-width: 40ch; }
+  .notes strong { color: var(--ink); font-weight: 600; }
+  footer { margin-top: 40px; font-size: 14px; color: var(--muted); }
+  a { color: inherit; text-decoration-color: var(--signal); text-underline-offset: 3px; text-decoration-thickness: 2px; }
+  .missing { padding: 18px; border: 1px solid var(--wire); border-radius: 10px; margin-bottom: 24px; }
+  @media (prefers-reduced-motion: reduce) { .bar { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">A digit reader made of logic gates</h1>
+  <p class="lede">Draw a digit. There are no weights or multiplications here: every decision is made by AND, OR, XOR and friends, wired into a circuit that was learned by gradient descent and then frozen.</p>
+
+  <div id="missing" class="missing" hidden>
+    No circuit loaded. Train a model and run <code>python export_demo.py runs/&lt;run&gt;</code> to create <code>docs/model.js</code>.
+  </div>
+
+  <section class="bench" aria-label="Demo">
+    <div>
+      <div class="pad-wrap">
+        <canvas id="pad" width="560" height="560" tabindex="0" aria-label="Drawing pad. Draw a single digit from 0 to 9."></canvas>
+        <div class="pad-hint" id="hint">Draw a digit here</div>
+      </div>
+      <div class="pad-tools">
+        <button id="clear" type="button">Clear</button>
+        <span class="timing" id="timing" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div>
+      <div class="readout">
+        <div class="guess empty" id="guess" aria-live="polite" aria-label="Prediction">?</div>
+        <div class="seen">
+          <figure>
+            <canvas id="seen" width="28" height="28" aria-hidden="true"></canvas>
+            <figcaption>The bits the circuit actually receives</figcaption>
+          </figure>
+        </div>
+      </div>
+      <div class="votes" id="votes"></div>
+      <p class="votes-caption" id="votes-caption"></p>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div>
+      <h2>Train it soft</h2>
+      <p>Each gate starts as a blend of all 16 two-input boolean functions, using a smooth version of each so the network can be trained with ordinary backpropagation.</p>
+    </div>
+    <div>
+      <h2>Freeze it hard</h2>
+      <p>After training, every gate keeps only its most likely function. What's left is a plain boolean circuit, which is then simplified: <strong id="gates-before">the trained gates</strong> shrink to <strong id="gates-after">the ones you're running now</strong>.</p>
+    </div>
+    <div>
+      <h2>Count the votes</h2>
+      <p>The final gates are split into ten equal groups, one per digit. The group with the most gates outputting 1 wins. That's the whole classifier.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span id="acc"></span>
+    Code and write-up: <a href="https://github.com/georgepol1023/logic-gate-nets">github.com/georgepol1023/logic-gate-nets</a>
+  </footer>
+</main>
+
+<script src="model.js"></script>
+<script>
+(() => {
+  const M = window.LGN_MODEL;
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => n.toLocaleString("en-GB");
+
+  if (!M) { $("missing").hidden = false; return; }
+
+  const meta = M.meta;
+  const nIn = M.n_inputs, ops = Int8Array.from(M.ops), A = Int32Array.from(M.a), B = Int32Array.from(M.b);
+  const outs = Int32Array.from(M.outputs), nGates = ops.length, C = meta.n_classes;
+  const perClass = outs.length / C;
+  const [H, W] = meta.image_shape;
+  const thresholds = meta.thresholds, maxValue = meta.max_value;
+  const vals = new Uint8Array(nIn + nGates);
+
+  $("title").textContent = `A digit reader made of ${fmt(nGates)} logic gates`;
+  $("gates-before").textContent = `${fmt(meta.gates_trained)} trained gates`;
+  $("gates-after").textContent = `${fmt(nGates)}`;
+  $("acc").textContent = `${(meta.test_accuracy * 100).toFixed(1)}% on the ${meta.dataset.toUpperCase()} test set, circuit depth ${meta.depth}.`;
+  $("votes-caption").textContent = `Each digit gets ${fmt(perClass)} output gates. Bars show how many of them output 1.`;
+
+  // ---- the circuit ----
+  function evaluate(bits) {
+    vals.set(bits);
+    for (let j = 0; j < nGates; j++) {
+      const a = vals[A[j]], b = vals[B[j]];
+      let v;
+      switch (ops[j]) {
+        case 1: v = a & b; break;          case 2: v = a & (b ^ 1); break;
+        case 4: v = (a ^ 1) & b; break;    case 6: v = a ^ b; break;
+        case 7: v = a | b; break;          case 8: v = (a | b) ^ 1; break;
+        case 9: v = (a ^ b) ^ 1; break;    case 11: v = a | (b ^ 1); break;
+        case 12: v = a ^ 1; break;         case 13: v = (a ^ 1) | b; break;
+        case 14: v = (a & b) ^ 1; break;   case 3: v = a; break;
+        case 5: v = b; break;              case 10: v = b ^ 1; break;
+        case 0: v = 0; break;              default: v = 1;
+      }
+      vals[nIn + j] = v;
+    }
+    const votes = new Array(C).fill(0);
+    for (let k = 0; k < outs.length; k++) {
+      const r = outs[k];
+      const v = r === -1 ? 0 : r === -2 ? 1 : vals[r];
+      votes[(k / perClass) | 0] += v;
+    }
+    return votes;
+  }
+
+  // ---- drawing pad ----
+  const pad = $("pad"), ctx = pad.getContext("2d", { willReadFrequently: true });
+  let drawing = false, last = null, hasInk = false, queued = false;
+
+  function clearPad() {
+    ctx.clearRect(0, 0, pad.width, pad.height);
+    hasInk = false;
+    $("hint").hidden = false;
+    render(null);
+  }
+  function point(e) {
+    const r = pad.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * pad.width / r.width, y: (e.clientY - r.top) * pad.height / r.height };
+  }
+  function stroke(p) {
+    ctx.strokeStyle = "#000"; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.lineWidth = pad.width * 0.065;
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    last = p;
+    hasInk = true;
+    $("hint").hidden = true;
+    if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; classify(); }); }
+  }
+  pad.addEventListener("pointerdown", (e) => { drawing = true; pad.setPointerCapture(e.pointerId); last = point(e); stroke({ x: last.x + 0.01, y: last.y }); });
+  pad.addEventListener("pointermove", (e) => { if (drawing) stroke(point(e)); });
+  ["pointerup", "pointercancel"].forEach((t) => pad.addEventListener(t, () => { drawing = false; }));
+  $("clear").addEventListener("click", clearPad);
+  pad.addEventListener("keydown", (e) => { if (e.key === "Delete" || e.key === "Backspace" || e.key === "Escape") clearPad(); });
+
+  // ---- preprocessing: match how the training images were made ----
+  // MNIST digits are scaled to fit a 20x20 box, then centred by centre of mass in 28x28.
+  const work = document.createElement("canvas");
+  work.width = W; work.height = H;
+  const wctx = work.getContext("2d", { willReadFrequently: true });
+
+  function inkBox() {
+    const d = ctx.getImageData(0, 0, pad.width, pad.height).data;
+    let x0 = pad.width, y0 = pad.height, x1 = -1, y1 = -1;
+    for (let y = 0; y < pad.height; y += 2) for (let x = 0; x < pad.width; x += 2) {
+      if (d[(y * pad.width + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    return x1 < 0 ? null : { x0, y0, w: x1 - x0 + 2, h: y1 - y0 + 2 };
+  }
+  function toImage() {
+    const box = inkBox();
+    if (!box) return null;
+    const fit = H === 28 ? 20 : H;       // MNIST uses a margin; 8x8 digits fill the frame
+    const s = fit / Math.max(box.w, box.h);
+    const dw = box.w * s, dh = box.h * s;
+    const place = (ox, oy) => {
+      wctx.clearRect(0, 0, W, H);
+      wctx.imageSmoothingEnabled = true; wctx.imageSmoothingQuality = "high";
+      wctx.drawImage(pad, box.x0, box.y0, box.w, box.h, ox, oy, dw, dh);
+      const d = wctx.getImageData(0, 0, W, H).data, img = new Float32Array(W * H);
+      for (let i = 0; i < W * H; i++) img[i] = d[i * 4 + 3] / 255;
+      return img;
+    };
+    let img = place((W - dw) / 2, (H - dh) / 2);
+    if (H === 28) {
+      let m = 0, cx = 0, cy = 0;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const v = img[y * W + x]; m += v; cx += v * x; cy += v * y; }
+      if (m > 0) img = place((W - dw) / 2 + (W - 1) / 2 - cx / m, (H - dh) / 2 + (H - 1) / 2 - cy / m);
+    }
+    return img.map((v) => v * maxValue);
+  }
+  function encode(img) {
+    const bits = new Uint8Array(nIn), P = W * H;
+    thresholds.forEach((t, ti) => { for (let i = 0; i < P; i++) bits[ti * P + i] = img[i] > t ? 1 : 0; });
+    return bits;
+  }
+
+  // ---- output ----
+  const seen = $("seen"), sctx = seen.getContext("2d");
+  seen.width = W; seen.height = H;
+  const votesEl = $("votes"), rows = [];
+  for (let c = 0; c < C; c++) {
+    const row = document.createElement("div");
+    row.className = "vote";
+    row.innerHTML = `<span class="d">${c}</span><span class="track"><span class="bar"></span></span><span class="n">0</span>`;
+    votesEl.appendChild(row);
+    rows.push({ row, bar: row.querySelector(".bar"), n: row.querySelector(".n") });
+  }
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  function drawSeen(bits) {
+    const P = W * H, img = sctx.createImageData(W, H);
+    const on = hex(css("--signal")), off = hex(css("--surface")), mid = hex(css("--wire"));
+    for (let i = 0; i < P; i++) {
+      // with several thresholds, show the highest one each pixel passes
+      let level = 0;
+      if (bits) for (let t = 0; t < thresholds.length; t++) level += bits[t * P + i];
+      const f = level / thresholds.length;
+      const c = f === 0 ? off : mix(mid, on, f);
+      img.data.set([c[0], c[1], c[2], 255], i * 4);
+    }
+    sctx.putImageData(img, 0, 0);
+  }
+  function hex(h) { const v = parseInt(h.replace("#", ""), 16); return [v >> 16, (v >> 8) & 255, v & 255]; }
+  function mix(a, b, f) { return a.map((x, i) => Math.round(x + (b[i] - x) * f)); }
+
+  function render(votes, bits, micros) {
+    drawSeen(bits);
+    const best = votes ? votes.indexOf(Math.max(...votes)) : -1;
+    rows.forEach((r, c) => {
+      const v = votes ? votes[c] : 0;
+      r.bar.style.width = `${(100 * v) / perClass}%`;
+      r.n.textContent = fmt(v);
+      r.row.classList.toggle("win", c === best);
+    });
+    const g = $("guess");
+    g.textContent = best < 0 ? "?" : String(best);
+    g.classList.toggle("empty", best < 0);
+    $("timing").textContent = micros == null ? "" : `${fmt(nGates)} gates in ${micros < 1000 ? micros.toFixed(0) + " µs" : (micros / 1000).toFixed(1) + " ms"}`;
+  }
+
+  function classify() {
+    if (!hasInk) return render(null);
+    const img = toImage();
+    if (!img) return render(null);
+    const bits = encode(img);
+    const reps = 10, t0 = performance.now();
+    let votes;
+    for (let i = 0; i < reps; i++) votes = evaluate(bits);
+    render(votes, bits, ((performance.now() - t0) * 1000) / reps);
+  }
+
+  clearPad();
+})();
+</script>
+</body>
+</html>
